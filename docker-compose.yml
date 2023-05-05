@@ -1,0 +1,55 @@
+version: '3.6'
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    networks:
+      - telegraf-prometheus
+    ports:
+      - 9090:9090
+  telegraf:
+    build:
+      context: telegraf
+    container_name: telegraf
+    restart: always
+    healthcheck:
+      test: ["CMD", "telegraf --config /etc/telegraf/telegraf.conf --test"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+    privileged: true
+    networks:
+      - telegraf-prometheus
+    depends_on:
+      - prometheus
+  qt-client:
+    build:
+      context: qt-client
+    container_name: qt-client
+    restart: always
+    privileged: true
+    environment:
+      - URL_TELEGRAF=telegraf
+      - PORT_TELEGRAF=8585
+    networks:
+      - telegraf-prometheus
+    depends_on:
+      - telegraf
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - 3000:3000
+    depends_on:
+      - prometheus
+      - telegraf
+      - qt-client
+    networks:
+      - telegraf-prometheus
+networks:
+  telegraf-prometheus:
+    driver: bridge
