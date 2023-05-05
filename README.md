@@ -8,7 +8,6 @@
 
 ## Functioning
 
-### Fichier config.json
 the telegraf collection agent is configured as a tcp server. 
 It collects metrics using the tcp client which is coded in c++ qt. 
 Prometheus allows data collected by telegraf to be exposed to the grafana service
